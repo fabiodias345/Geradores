@@ -1,11 +1,12 @@
 'use client';
 
+import Image from 'next/image';
 import { FormEvent, useState } from 'react';
 import { login } from '../../lib/api';
 import styles from './login.module.css';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [identificador, setIdentificador] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -15,7 +16,7 @@ export default function LoginPage() {
     setErro('');
     setEnviando(true);
     try {
-      await login(email, senha);
+      await login(identificador, senha);
       window.location.assign('/');
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível entrar');
@@ -25,19 +26,33 @@ export default function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.brand}><span>G</span> geradores<span className={styles.brandEnd}>.</span></div>
-        <p className={styles.eyebrow}>HUL · MANUTENÇÃO</p>
-        <h1 className={styles.title}>Entrar no painel<span>.</span></h1>
-        <p className={styles.copy}>Acesse o ambiente de operação e manutenção dos geradores.</p>
-        <form onSubmit={handleSubmit}>
-          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
-          <label>Senha<input type="password" value={senha} onChange={(event) => setSenha(event.target.value)} autoComplete="current-password" required /></label>
-          {erro && <p className={styles.error} role="alert">{erro}</p>}
-          <button disabled={enviando}>{enviando ? 'Entrando...' : 'Entrar no painel →'}</button>
-        </form>
-        <small className={styles.environment}>ambiente local · Docker</small>
+      <section className={styles.accessPanel} aria-label="Acesso ao painel">
+        <div className={styles.accessInner}>
+          <header className={styles.header}>
+            <div className={styles.logoMark}>G</div>
+            <div className={styles.logoWord}>geradores<span>.</span></div>
+            <span className={styles.headerTag}>HUL</span>
+          </header>
+          <div className={styles.intro}>
+            <p className={styles.kicker}>ÁREA RESTRITA · MANUTENÇÃO</p>
+            <h1>Controle que mantém<br /><em>tudo ligado.</em></h1>
+            <p className={styles.description}>Acompanhe os ativos, as ordens de serviço e a rotina preventiva dos geradores do Hospital Universitário de Londrina.</p>
+          </div>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <label className={styles.field}><span>Login ou e-mail institucional</span><input type="text" value={identificador} onChange={(event) => setIdentificador(event.target.value)} autoComplete="username" placeholder="seu.login ou nome@uel.br" required /></label>
+            <label className={styles.field}><span>Senha</span><input type="password" value={senha} onChange={(event) => setSenha(event.target.value)} autoComplete="current-password" placeholder="Digite sua senha" required /></label>
+            {erro && <p className={styles.error} role="alert">{erro}</p>}
+            <button className={styles.submit} disabled={enviando} type="submit"><span>{enviando ? 'Validando acesso' : 'Acessar painel'}</span><b>↗</b></button>
+          </form>
+          <footer className={styles.footer}><span>HUL · Gestão de geradores</span><span>Ambiente local</span></footer>
+        </div>
       </section>
+      <aside className={styles.visualPanel} aria-label="Gerador do Hospital Universitário de Londrina">
+        <Image className={styles.heroImage} src="/gerador-hul.png" alt="Gerador de emergência instalado no Hospital Universitário de Londrina" fill priority sizes="(max-width: 900px) 100vw, 57vw" />
+        <div className={styles.imageShade} />
+        <div className={styles.visualTop}><span className={styles.liveDot} /> SISTEMA DE OPERAÇÃO</div>
+        <div className={styles.visualCopy}><p>Prevenir, automatizar,<br /><strong>monitorar:</strong></p><span>energia que não falha.</span></div>
+      </aside>
     </main>
   );
 }

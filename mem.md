@@ -4,13 +4,14 @@
 
 - Desenvolvimento e execução local via Docker Compose.
 - Sem Supabase e sem dependência de VM/provedor durante o desenvolvimento.
-- Backend próprio com Fastify, PostgreSQL, autenticação por sessão e armazenamento local compatível com S3.
+- Backend próprio com Fastify, PostgreSQL, autenticação por sessão e storage local.
 - Frontend Next.js + TypeScript.
-- Segredos, chaves e arquivos `.env` ficam somente em `C:\Users\0602382\.config\geradores-hul\`, nunca no Git.
-- Toda fase deve terminar com testes de saída registrados antes de ser considerada concluída.
-- Não usar dados falsos como se fossem dados reais.
-- `main` fica para versões estáveis; `dev` é a branch de integração.
-- Templates de issues ficam versionados em `.github/ISSUE_TEMPLATE/`; não criar issues automaticamente.
+- Segredos, chaves e `.env` ficam somente em `C:\Users\0602382\.config\geradores-hul\`.
+- Toda fase termina com testes de saída registrados.
+- Não usar dados falsos como dados reais.
+- `main` guarda versões estáveis; `dev` será a branch de integração.
+- Templates de issues ficam em `.github/ISSUE_TEMPLATE/`; não criar issues automaticamente.
+- Acesso só para usuários previamente liberados pelo administrador. `@uel.br` não autoriza acesso sozinho; cadastro público está bloqueado.
 
 ## Fases
 
@@ -18,43 +19,47 @@
 
 Status: concluída.
 
-- Compose local com web, API, PostgreSQL e storage.
-- Scaffold Next.js e Fastify.
-- `.env.example`, README e estrutura inicial.
+Compose local com web, API, PostgreSQL e storage; scaffold Next.js/Fastify; `.env.example`, README e estrutura inicial.
 
-Testes de saída: `docker compose config`, build/up dos serviços, painel `200`, API `/health` `200`, MinIO health `200`, PostgreSQL aceitando conexões e resolução interna entre containers.
+Testes: `docker compose config`, build/up, painel `200`, API `/health` `200`, storage health `200`, PostgreSQL aceitando conexão e resolução entre containers.
 
 ### Fase 02 — Autenticação e perfis
 
 Status: concluída.
 
-- Usuário, perfil, sessão e auditoria inicial no PostgreSQL.
-- Login, logout, sessão atual, cadastro técnico e bootstrap de administrador.
-- Sessão em cookie HttpOnly com token armazenado apenas por hash.
+Usuário, perfis, sessões, auditoria inicial, login/logout/me, cookie HttpOnly e bootstrap de administrador.
 
-Testes de saída: build/typecheck da API, migration idempotente, cadastro/login/me/logout com invalidação de sessão, retorno `401` após logout e login de administrador promovido.
+Testes: migrations idempotentes, login/logout/me, sessão invalidada após logout, `401` e login de administrador.
 
 ### Fase 03 — Integração da autenticação no painel web
 
 Status: concluída.
 
-- Tela `/login` integrada à API.
-- Painel protegido por sessão; usuário não autenticado é enviado para `/login`.
-- Exibição do usuário/perfil e logout.
-- Cliente HTTP do frontend configurado para cookies de sessão.
+Tela de login, proteção do painel, logout e identificação do usuário/perfil.
 
-Testes de saída: `docker compose build web`, `npm run build` dentro do container, rota `/login` `200`, rota `/` `200` e API `/health` `200`.
+Testes: build Next.js, `/login` `200`, `/` `200`, API `/health` `200`.
 
-### Fase 04 — Modelo de negócio e CRUD de geradores
+### Fase 04 — Geradores
+
+Status: concluída.
+
+- Migration `003_geradores.sql` com identificação, prédio, localização, modelo, potência, série, tanque, status e responsáveis.
+- CRUD protegido: leitura para usuário autenticado; criação/edição para administrador ou gestor; desativação para administrador.
+- Auditoria de criação, alteração e desativação.
+- Painel visual com inventário, estado vazio, formulário e edição.
+- A imagem do gerador fica em `apps/web/public/gerador-hul.png`.
+
+Testes: TypeScript da API, build Next.js, migration e tabela, endpoint sem sessão `401`, login temporário `200`, criação `201`, listagem, edição e desativação; dados temporários removidos.
+
+### Fase 05 — Liberação de usuários no painel
 
 Status: próxima.
 
-- Definir e implementar tabelas de geradores, localizações e dados do tanque.
-- Criar endpoints protegidos por perfil.
-- Criar tela de listagem, cadastro, edição e consulta.
-- Registrar alterações relevantes para auditoria.
+- Tela exclusiva de administrador para listar usuários pendentes.
+- Criar usuário com login ou e-mail `@uel.br`.
+- Liberar, bloquear, alterar perfil e registrar auditoria.
 
-## Rotina de execução
+## Rotina local
 
 ```powershell
 docker compose up -d --build
@@ -63,11 +68,12 @@ Invoke-WebRequest http://localhost:3001/login
 Invoke-WebRequest http://localhost:4000/health
 ```
 
-## Estrutura de referência
+## Estrutura
 
 ```text
 apps/web       Next.js
 apps/api       Fastify + PostgreSQL
+apps/web/public/gerador-hul.png
 docker-compose.yml
 .github/ISSUE_TEMPLATE/
 mem.md
