@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Dúvida operacional
+    url: https://github.com/fabiodias345/Geradores/discussions
+    about: Use discussões para dúvidas que ainda não representam uma tarefa pronta.
