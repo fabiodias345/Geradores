@@ -60,7 +60,7 @@ export async function atualizarTecnico(id: string, input: Partial<TecnicoInput>,
   const anterior = await pool.query('select * from tecnico where id = $1 for update', [id]);
   if (!anterior.rowCount) throw new Error('técnico não encontrado');
   const atual = { ...anterior.rows[0], ...input };
-  if (input.senha && atual.usuario_id) { await pool.query('update usuario set senha_hash=, atualizado_em=now() where id=', [await bcrypt.hash(input.senha, 12), atual.usuario_id]); }
+  if (input.senha && atual.usuario_id) { await pool.query('update usuario set senha_hash=$1, atualizado_em=now() where id=$2', [await bcrypt.hash(input.senha, 12), atual.usuario_id]); }
   const result = await pool.query(
     `update tecnico set nome=$1, documento=$2, telefone_whatsapp=$3, email=$4, especialidade=$5, acesso_app=$6, perfil=$7, atualizado_por=$8, atualizado_em=now()
      where id=$9 returning *`,

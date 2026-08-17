@@ -5,6 +5,7 @@ import { autenticar, criarSessao, encerrarSessao, obterUsuario } from './auth.js
 import { executarMigrations } from './db.js';
 import { atualizarGerador, criarGerador, desativarGerador, listarGeradores, validarGerador, type GeradorInput } from './geradores.js';
 import { atualizarTecnico, criarTecnico, desativarTecnico, listarTecnicos, validarTecnico, type TecnicoInput } from './tecnicos.js';
+import { atualizarAdministrador, criarAdministrador, desativarAdministrador, listarAdministradores, validarAdministrador, type AdministradorInput } from './usuarios.js';
 
 const app = Fastify({ logger: true });
 await app.register(cookie);
@@ -41,6 +42,34 @@ async function usuarioAutenticado(request: FastifyRequest, reply: FastifyReply, 
 
 function idValido(id: string) { return /^[0-9a-f-]{36}$/i.test(id); }
 
+app.get('/administradores', async (request, reply) => {
+  if (!await usuarioAutenticado(request, reply, ['administrador'])) return;
+  return { administradores: await listarAdministradores() };
+});
+
+app.post<{ Body: Partial<AdministradorInput> }>('/administradores', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador']);
+  if (!usuario) return;
+  try { return reply.code(201).send({ administrador: await criarAdministrador(validarAdministrador(request.body ?? {}) as AdministradorInput) }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar o administrador' }); }
+});
+
+app.patch<{ Params: { id: string }; Body: Partial<AdministradorInput> }>('/administradores/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de administrador inválido' });
+  try { return { administrador: await atualizarAdministrador(request.params.id, validarAdministrador(request.body ?? {}, true) as Partial<AdministradorInput>) }; }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível atualizar o administrador' }); }
+});
+
+app.delete<{ Params: { id: string } }>('/administradores/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador']);
+  if (!usuario) return;
+  if (usuario.id === request.params.id) return reply.code(400).send({ error: 'não é possível inativar o próprio usuário' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de administrador inválido' });
+  try { await desativarAdministrador(request.params.id); return { ok: true }; }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'administrador não encontrado' }); }
+});
 app.get('/tecnicos', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador'])) return;
   return { tecnicos: await listarTecnicos() };

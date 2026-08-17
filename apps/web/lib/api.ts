@@ -4,6 +4,8 @@ export type UsuarioSessao = { id: string; email: string | null; login: string | 
 export type DadosTecnicos = Record<string, string>;
 export type Tecnico = { id: string; nome: string; documento: string | null; telefone_whatsapp: string | null; email: string | null; especialidade: string | null; acesso_app: boolean; perfil: 'tecnico' | 'tecnico_pro'; ativo: boolean };
 export type TecnicoInput = Omit<Tecnico, 'id' | 'ativo'> & { senha?: string };
+export type Administrador = { id: string; nome: string; email: string; ativo: boolean; criado_em: string };
+export type AdministradorInput = { nome: string; email: string; senha?: string };
 export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; foto_url: string | null; dados_tecnicos: DadosTecnicos; ativo: boolean };
 export type GeradorInput = Omit<Gerador, 'id' | 'ativo'>;
 
@@ -26,3 +28,8 @@ export function listarTecnicos() { return request<{ tecnicos: Tecnico[] }>('/tec
 export function criarTecnico(input: TecnicoInput) { return request<{ tecnico: Tecnico }>('/tecnicos', { method: 'POST', body: JSON.stringify(input) }); }
 export function atualizarTecnico(id: string, input: Partial<TecnicoInput>) { return request<{ tecnico: Tecnico }>(/tecnicos/, { method: 'PATCH', body: JSON.stringify(input) }); }
 export function desativarTecnico(id: string) { return request<{ ok: true }>(/tecnicos/, { method: 'DELETE' }); }
+
+export function listarAdministradores() { return request<{ administradores: Administrador[] }>('/administradores'); }
+export function criarAdministrador(input: AdministradorInput) { return request<{ administrador: Administrador }>('/administradores', { method: 'POST', body: JSON.stringify(input) }); }
+export function atualizarAdministrador(id: string, input: Partial<AdministradorInput>) { return request<{ administrador: Administrador }>(/administradores/, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function desativarAdministrador(id: string) { return request<{ ok: true }>(/administradores/, { method: 'DELETE' }); }
