@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import styles from './page.module.css';
+import AdminPanel from './admin-panel';
 import { atualizarGerador, criarGerador, desativarGerador, getSession, listarGeradores, logout, type Gerador, type GeradorInput, type UsuarioSessao } from '../lib/api';
 
 type Formulario = {
@@ -22,6 +23,7 @@ export default function HomePage() {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
+  const [administracao, setAdministracao] = useState(false);
 
   async function carregar() { const resultado = await listarGeradores(); setGeradores(resultado.geradores); }
   useEffect(() => { getSession().then(async ({ usuario: atual }) => { setUsuario(atual); await carregar(); }).catch(() => window.location.assign('/login')).finally(() => setCarregando(false)); }, []);
@@ -41,10 +43,10 @@ export default function HomePage() {
   return <main className="dashboard-shell">
     <header className="main-header">
       <div className="brand"><span className="brand-mark">H</span><div><strong>HUNPR GERADORES</strong><small>CONTROLE DE MANUTENÇÃO</small></div></div>
-      <nav aria-label="Navegação principal"><a className="active" href="#supervisorio">Supervisório</a><a href="#geradores">Geradores</a><a href="#servicos">Serviços</a><a href="#planejamento">Planejamento</a><a href="#historico">Histórico</a><a href="#administracao">Administração</a></nav>
+      <nav aria-label="Navegação principal"><a className="active" href="#supervisorio">Supervisório</a><a href="#geradores">Geradores</a><a href="#servicos">Serviços</a><a href="#planejamento">Planejamento</a><a href="#historico">Histórico</a><a className={administracao ? "active" : ""} href="#administracao" onClick={(event) => { event.preventDefault(); setAdministracao(true); }}>Administração</a></nav>
       <div className="account"><button>{usuario.nome || identificador}</button><button className={styles.logoutButton} onClick={sair}>Sair</button></div>
     </header>
-    <section className="dashboard-content" id="geradores">
+    <section className={`dashboard-content ${administracao ? styles.hidden : ""}`} id="geradores">
       <div className={styles.pageHeading}><div><p className="eyebrow">SUPERVISÓRIO · VISÃO GERAL</p><h1>Estado da frota</h1><p className="lead">Selecione um gerador para consultar os detalhes operacionais.</p></div><div className="system-status"><strong>• SISTEMA ONLINE</strong><span>Dados disponíveis na base operacional</span></div></div>
       {erro && !aberto && <p className={styles.feedback}>{erro}</p>}
       <section className={styles.fleetCard}>
@@ -53,6 +55,7 @@ export default function HomePage() {
       </section>
       {podeEditar && <button className={styles.floatingAdd} onClick={abrirNovo}>+ Novo gerador</button>}
     </section>
+    {administracao && <AdminPanel podeEditar={usuario.perfil === "administrador"} />}
     {aberto && <div className={styles.modalBackdrop} role="presentation"><section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="form-title"><div className={styles.modalHeader}><div><span className={styles.tableKicker}>DADOS DO ATIVO</span><h2 id="form-title">{editando ? 'Editar gerador' : 'Novo gerador'}</h2></div><button className={styles.closeButton} onClick={() => setAberto(false)} aria-label="Fechar">×</button></div><div className={styles.modalPhoto}>{formulario.foto_url ? <Image src={formulario.foto_url} alt="Prévia da foto do gerador" fill sizes="(max-width: 800px) 100vw, 260px" /> : <span>Nenhuma foto selecionada</span>}</div><form className={styles.generatorForm} onSubmit={salvar}>
   <div className={styles.formSection}><h3>GERAL</h3><label>Gerador Local<input value={formulario.gerador_local} onChange={(e) => alterar('gerador_local', e.target.value)} /></label><label>FUEL<input value={formulario.fuel} onChange={(e) => alterar('fuel', e.target.value)} placeholder="Número do patrimônio" /></label></div>
   <div className={styles.formSection}><h3>ELÉTRICA</h3><label>USCA MODELO<input value={formulario.usca_modelo} onChange={(e) => alterar('usca_modelo', e.target.value)} /></label><label>TENSÃO A.C<input value={formulario.tensao_ac} onChange={(e) => alterar('tensao_ac', e.target.value)} /></label><label>TENSÃO C.C<input value={formulario.tensao_dc} onChange={(e) => alterar('tensao_dc', e.target.value)} /></label><label>CORRENTE<input value={formulario.corrente} onChange={(e) => alterar('corrente', e.target.value)} /></label><label>KVA<input value={formulario.kva} onChange={(e) => alterar('kva', e.target.value)} /></label><label>FABRICADO<input value={formulario.fabricado} onChange={(e) => alterar('fabricado', e.target.value)} /></label></div>
