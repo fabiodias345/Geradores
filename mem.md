@@ -48,6 +48,7 @@ Status: concluída.
 - Auditoria de criação, alteração e desativação.
 - Painel visual com inventário, estado vazio, formulário e edição.
 - A imagem do gerador fica em `apps/web/public/gerador-hul.png`.
+- Regra inviolável: nenhum arquivo de código pode passar de 350 linhas. Se uma alteração aproximar ou ultrapassar o limite, dividir antes de continuar; arquivos já existentes acima do limite ficam registrados para refatoração posterior, sem corrigir nesta fase.
 
 Testes: TypeScript da API, build Next.js, migration e tabela, endpoint sem sessão `401`, login temporário `200`, criação `201`, listagem, edição e desativação; dados temporários removidos.
 
