@@ -25,3 +25,8 @@
 .reportStats strong { margin-top:12px; color:#eff5ed; font-size:27px; }
 .reportEmpty { margin-top:22px; padding:38px; border:1px dashed #397064; border-radius:14px; color:#80aaa1; text-align:center; font-size:17px; }
 @media(max-width:800px) { .reportPanel { padding:20px; } .reportFilters,.reportStats { grid-template-columns:1fr; } }
+
+.adminPlaceholder { padding:30px; border:1px solid #234b43; border-radius:13px; background:#0b221d; }
+.adminPlaceholder h2 { margin:0 0 10px; color:#eff5ed; font-size:20px; }
+.adminPlaceholder p { max-width:620px; color:#80aaa1; font-size:13px; line-height:1.6; }
+.adminPlaceholder button { margin-top:12px; border:1px solid #31574e; border-radius:5px; padding:10px 13px; color:#789b92; background:transparent; }
