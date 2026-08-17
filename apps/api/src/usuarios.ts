@@ -4,6 +4,7 @@ import { pool } from './db.js';
 export type AdministradorInput = { nome: string; email: string; senha?: string | null };
 
 function texto(valor: unknown) { return typeof valor === 'string' ? valor.trim() : ''; }
+function validarSenha(senha: string) { if (!/^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/.test(senha)) throw new Error('a senha deve ter no mínimo 8 caracteres, com letra, número e caractere especial'); }
 
 export function validarAdministrador(input: Partial<AdministradorInput>, parcial = false): AdministradorInput | Partial<AdministradorInput> {
   const resultado: Partial<AdministradorInput> = {};
@@ -17,7 +18,7 @@ export function validarAdministrador(input: Partial<AdministradorInput>, parcial
   }
   if (input.senha !== undefined) {
     resultado.senha = texto(input.senha) || null;
-    if (resultado.senha && resultado.senha.length < 8) throw new Error('a senha deve ter pelo menos 8 caracteres');
+    if (resultado.senha) validarSenha(resultado.senha);
   }
   return resultado;
 }
