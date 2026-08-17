@@ -43,7 +43,7 @@ export default function HomePage() {
   return <main className="dashboard-shell">
     <header className="main-header">
       <div className="brand"><span className="brand-mark">H</span><div><strong>HUNPR GERADORES</strong><small>CONTROLE DE MANUTENÇÃO</small></div></div>
-      <nav aria-label="Navegação principal"><a className="active" href="#supervisorio">Supervisório</a><a href="#geradores">Geradores</a><a href="#servicos">Serviços</a><a className={administracao ? "active" : ""} href="#administracao" onClick={(event) => { event.preventDefault(); setAdministracao(true); }}>Administração</a></nav>
+      <nav aria-label="Navegação principal"><a className={!administracao ? "active" : ""} href="#supervisorio" onClick={(event) => { event.preventDefault(); setAdministracao(false); }}>Supervisório</a><a href="#geradores">Geradores</a><a href="#servicos">Serviços</a><a className={administracao ? "active" : ""} href="#administracao" onClick={(event) => { event.preventDefault(); setAdministracao(true); }}>Administração</a></nav>
       <div className="account"><button>{usuario.nome || identificador}</button><button className={styles.logoutButton} onClick={sair}>Sair</button></div>
     </header>
     <section className={`dashboard-content ${administracao ? styles.hidden : ""}`} id="geradores">
