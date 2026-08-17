@@ -40,9 +40,14 @@
 @media(max-width:800px) { .pageHeading{align-items:start;flex-direction:column;padding:32px 0 24px}.pageHeading h1{font-size:34px}.system-status{text-align:left}.fleetHeader{align-items:start;flex-direction:column;gap:8px}.generatorCard{width:100%}.generatorForm{grid-template-columns:1fr}.wide{grid-column:auto}.modalActions.wide{grid-column:auto} }
 
 .generatorCard { flex-direction:row; gap:14px; }
-.photoPlaceholder { display:grid; place-items:center; width:150px; height:110px; flex:none; border:1px dashed #31574e; border-radius:9px; color:#79a69c; font-size:11px; }`n.generatorPhoto { width:150px; height:110px; flex:none; object-fit:cover; border-radius:9px; border:1px solid #31574e; }
+.photoPlaceholder { display:grid; place-items:center; width:150px; height:110px; flex:none; border:1px dashed #31574e; border-radius:9px; color:#79a69c; font-size:11px; }
+.generatorPhoto { width:150px; height:110px; flex:none; object-fit:cover; border-radius:9px; border:1px solid #31574e; }
 .generatorCardContent { display:flex; flex:1; min-width:0; flex-direction:column; }
 .modalPhoto { position:relative; height:220px; margin:24px 28px 0; overflow:hidden; border:1px solid #31574e; border-radius:8px; background:#071611; }
 .modalPhoto img { object-fit:cover; }
 .modalPhoto span { display:grid; height:100%; place-items:center; color:#79a69c; font-size:12px; }
 @media(max-width:800px) { .generatorCard { flex-direction:column; } .generatorPhoto { width:100%; height:180px; } .photoPlaceholder { width:100%; height:180px; } .modalPhoto { margin-inline:20px; } }
+
+.formSection { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding-top:10px; border-top:1px solid #315046; }
+.formSection h3 { grid-column:1/-1; margin:0; color:#c9e95d; font:800 11px 'DM Mono',monospace; letter-spacing:1px; }
+@media(max-width:800px) { .formSection { grid-template-columns:1fr; } .formSection h3 { grid-column:auto; } }
