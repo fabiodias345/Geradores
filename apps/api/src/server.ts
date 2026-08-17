@@ -6,6 +6,7 @@ import { executarMigrations } from './db.js';
 import { atualizarGerador, criarGerador, desativarGerador, listarGeradores, validarGerador, type GeradorInput } from './geradores.js';
 import { atualizarTecnico, criarTecnico, desativarTecnico, listarTecnicos, validarTecnico, type TecnicoInput } from './tecnicos.js';
 import { atualizarAdministrador, criarAdministrador, desativarAdministrador, listarAdministradores, validarAdministrador, type AdministradorInput } from './usuarios.js';
+import { apagarServico, atualizarServico, criarServico, listarServicos, validarServico, type ServicoInput } from './servicos.js';
 
 const app = Fastify({ logger: true });
 await app.register(cookie);
@@ -42,6 +43,33 @@ async function usuarioAutenticado(request: FastifyRequest, reply: FastifyReply, 
 
 function idValido(id: string) { return /^[0-9a-f-]{36}$/i.test(id); }
 
+app.get('/servicos', async (request, reply) => {
+  if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
+  return { servicos: await listarServicos() };
+});
+
+app.post<{ Body: Partial<ServicoInput> }>('/servicos', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
+  if (!usuario) return;
+  try { return reply.code(201).send({ servico: await criarServico(validarServico(request.body ?? {}) as ServicoInput, usuario.id) }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar a O.S.' }); }
+});
+
+app.patch<{ Params: { id: string }; Body: Partial<ServicoInput> }>('/servicos/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. inválido' });
+  try { return { servico: await atualizarServico(request.params.id, validarServico(request.body ?? {}, true) as Partial<ServicoInput>) }; }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível editar a O.S.' }); }
+});
+
+app.delete<{ Params: { id: string } }>('/servicos/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. inválido' });
+  try { await apagarServico(request.params.id); return { ok: true }; }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'O.S. não encontrada' }); }
+});
 app.get('/administradores', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador'])) return;
   return { administradores: await listarAdministradores() };
@@ -71,7 +99,7 @@ app.delete<{ Params: { id: string } }>('/administradores/:id', async (request, r
   catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'administrador não encontrado' }); }
 });
 app.get('/tecnicos', async (request, reply) => {
-  if (!await usuarioAutenticado(request, reply, ['administrador'])) return;
+  if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
   return { tecnicos: await listarTecnicos() };
 });
 

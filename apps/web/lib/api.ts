@@ -6,6 +6,8 @@ export type Tecnico = { id: string; nome: string; documento: string | null; tele
 export type TecnicoInput = Omit<Tecnico, 'id' | 'ativo'> & { senha?: string };
 export type Administrador = { id: string; nome: string; email: string; ativo: boolean; criado_em: string };
 export type AdministradorInput = { nome: string; email: string; senha?: string };
+export type Servico = { id: string; gerador_id: string; tecnico_id: string | null; tipo: 'corretiva' | 'preventiva'; titulo: string; data_os: string; descricao: string | null; observacoes: string | null; gerador_nome?: string; tecnico_nome?: string | null };
+export type ServicoInput = Omit<Servico, 'id' | 'gerador_nome' | 'tecnico_nome'>;
 export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; foto_url: string | null; dados_tecnicos: DadosTecnicos; ativo: boolean };
 export type GeradorInput = Omit<Gerador, 'id' | 'ativo'>;
 
@@ -33,3 +35,8 @@ export function listarAdministradores() { return request<{ administradores: Admi
 export function criarAdministrador(input: AdministradorInput) { return request<{ administrador: Administrador }>('/administradores', { method: 'POST', body: JSON.stringify(input) }); }
 export function atualizarAdministrador(id: string, input: Partial<AdministradorInput>) { return request<{ administrador: Administrador }>(/administradores/, { method: 'PATCH', body: JSON.stringify(input) }); }
 export function desativarAdministrador(id: string) { return request<{ ok: true }>(/administradores/, { method: 'DELETE' }); }
+
+export function listarServicos() { return request<{ servicos: Servico[] }>('/servicos'); }
+export function criarServico(input: ServicoInput) { return request<{ servico: Servico }>('/servicos', { method: 'POST', body: JSON.stringify(input) }); }
+export function atualizarServico(id: string, input: Partial<ServicoInput>) { return request<{ servico: Servico }>(/servicos/, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function apagarServico(id: string) { return request<{ ok: true }>(/servicos/, { method: 'DELETE' }); }
