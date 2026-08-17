@@ -9,6 +9,7 @@ export type GeradorInput = {
   potencia_kva: number;
   numero_serie?: string | null;
   tanque_capacidade_litros?: number | null;
+  foto_url?: string | null;
 };
 
 function texto(valor: unknown, campo: string) {
@@ -35,6 +36,7 @@ export function validarGerador(input: Partial<GeradorInput>, parcial = false): G
   if (!parcial || input.potencia_kva !== undefined) resultado.potencia_kva = numero(input.potencia_kva, 'potência (kVA)', true) as number;
   if (input.numero_serie !== undefined) resultado.numero_serie = input.numero_serie?.trim() || null;
   if (input.tanque_capacidade_litros !== undefined) resultado.tanque_capacidade_litros = numero(input.tanque_capacidade_litros, 'capacidade do tanque (litros)');
+  if (input.foto_url !== undefined) resultado.foto_url = typeof input.foto_url === 'string' && input.foto_url.startsWith('data:image/') ? input.foto_url : null;
   return resultado;
 }
 
@@ -55,9 +57,9 @@ export async function criarGerador(input: GeradorInput, usuarioId: string) {
   try {
     await client.query('begin');
     const result = await client.query(
-      `insert into gerador (identificacao, localizacao, predio, modelo, potencia_kva, numero_serie, tanque_capacidade_litros, criado_por, atualizado_por)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$8) returning *`,
-      [input.identificacao, input.localizacao, input.predio, input.modelo, input.potencia_kva, input.numero_serie ?? null, input.tanque_capacidade_litros ?? null, usuarioId],
+      `insert into gerador (identificacao, localizacao, predio, modelo, potencia_kva, numero_serie, tanque_capacidade_litros, foto_url, criado_por, atualizado_por)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9) returning *`,
+      [input.identificacao, input.localizacao, input.predio, input.modelo, input.potencia_kva, input.numero_serie ?? null, input.tanque_capacidade_litros ?? null, input.foto_url ?? null, usuarioId],
     );
     await auditar(client, usuarioId, 'criar', result.rows[0].id, null, result.rows[0]);
     await client.query('commit');
@@ -73,9 +75,9 @@ export async function atualizarGerador(id: string, input: Partial<GeradorInput>,
     if (!anterior.rowCount) throw new Error('gerador não encontrado');
     const atual = { ...anterior.rows[0], ...input };
     const result = await client.query(
-      `update gerador set identificacao=$1, localizacao=$2, predio=$3, modelo=$4, potencia_kva=$5, numero_serie=$6, tanque_capacidade_litros=$7, atualizado_por=$8, atualizado_em=now()
-       where id=$9 returning *`,
-      [atual.identificacao, atual.localizacao, atual.predio, atual.modelo, atual.potencia_kva, atual.numero_serie ?? null, atual.tanque_capacidade_litros ?? null, usuarioId, id],
+      `update gerador set identificacao=$1, localizacao=$2, predio=$3, modelo=$4, potencia_kva=$5, numero_serie=$6, tanque_capacidade_litros=$7, foto_url=$8, atualizado_por=$9, atualizado_em=now()
+       where id=$10 returning *`,
+      [atual.identificacao, atual.localizacao, atual.predio, atual.modelo, atual.potencia_kva, atual.numero_serie ?? null, atual.tanque_capacidade_litros ?? null, atual.foto_url ?? null, usuarioId, id],
     );
     await auditar(client, usuarioId, 'atualizar', id, anterior.rows[0], result.rows[0]);
     await client.query('commit');

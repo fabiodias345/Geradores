@@ -1,7 +1,7 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export type UsuarioSessao = { id: string; email: string | null; login: string | null; nome: string; perfil: 'administrador' | 'gestor' | 'tecnico' };
-export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; ativo: boolean };
+export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; foto_url: string | null; ativo: boolean };
 export type GeradorInput = Omit<Gerador, 'id' | 'ativo'>;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
