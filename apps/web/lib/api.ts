@@ -3,7 +3,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 export type UsuarioSessao = { id: string; email: string | null; login: string | null; nome: string; perfil: 'administrador' | 'gestor' | 'tecnico' };
 export type DadosTecnicos = Record<string, string>;
 export type Tecnico = { id: string; nome: string; documento: string | null; telefone_whatsapp: string | null; email: string | null; especialidade: string | null; acesso_app: boolean; perfil: 'tecnico' | 'tecnico_pro'; ativo: boolean };
-export type TecnicoInput = Omit<Tecnico, 'id' | 'ativo'>;
+export type TecnicoInput = Omit<Tecnico, 'id' | 'ativo'> & { senha?: string };
 export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; foto_url: string | null; dados_tecnicos: DadosTecnicos; ativo: boolean };
 export type GeradorInput = Omit<Gerador, 'id' | 'ativo'>;
 
