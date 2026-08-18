@@ -9,6 +9,7 @@ import { atualizarAdministrador, criarAdministrador, desativarAdministrador, lis
 import { apagarServico, atualizarServico, criarServico, listarServicos, validarServico, type ServicoInput } from './servicos.js';
 import { apagarPlanejamento, atualizarPlanejamento, criarPlanejamento, listarPlanejamentos, validarPlanejamento, type PlanejamentoInput } from './planejamento.js';
 import { enviarLembretesPlanejamento } from './planejamento-email.js';
+import { apagarEmpresa, atualizarEmpresa, criarEmpresa, listarEmpresas, validarEmpresa, type EmpresaInput } from './empresas.js';
 
 const app = Fastify({ logger: true });
 await app.register(cookie);
@@ -72,7 +73,30 @@ app.delete<{ Params: { id: string } }>('/servicos/:id', async (request, reply) =
   try { await apagarServico(request.params.id); return { ok: true }; }
   catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'O.S. não encontrada' }); }
 });
-app.get('/planejamento', async (request, reply) => {
+app.get('/empresas', async (request, reply) => {
+  if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
+  return { empresas: await listarEmpresas() };
+});
+app.post<{ Body: Partial<EmpresaInput> }>('/empresas', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador']);
+  if (!usuario) return;
+  try { return reply.code(201).send({ empresa: await criarEmpresa(validarEmpresa(request.body ?? {}) as EmpresaInput, usuario.id) }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar a empresa' }); }
+});
+app.patch<{ Params: { id: string }; Body: Partial<EmpresaInput> }>('/empresas/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de empresa inválido' });
+  try { return { empresa: await atualizarEmpresa(request.params.id, validarEmpresa(request.body ?? {}, true) as Partial<EmpresaInput>) }; }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível editar a empresa' }); }
+});
+app.delete<{ Params: { id: string } }>('/empresas/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de empresa inválido' });
+  try { await apagarEmpresa(request.params.id); return { ok: true }; }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'empresa não encontrada' }); }
+});app.get('/planejamento', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
   return { planejamentos: await listarPlanejamentos() };
 });

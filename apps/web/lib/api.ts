@@ -10,8 +10,10 @@ export type Servico = { id: string; gerador_id: string; tecnico_id: string | nul
 export type ServicoInput = Omit<Servico, 'id' | 'gerador_nome' | 'tecnico_nome'>;
 export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; foto_url: string | null; dados_tecnicos: DadosTecnicos; ativo: boolean };
 export type GeradorInput = Omit<Gerador, 'id' | 'ativo'>;
-export type Planejamento = { id: string; gerador_id: string; gerador_nome?: string; empresa_nome: string; empresa_email: string; mes_execucao: number; dia_execucao: number; troca_oleo_filtros: boolean; periodicidade_bateria_anos: number; ultima_bateria: string | null; proxima_data: string };
-export type PlanejamentoInput = Omit<Planejamento, 'id' | 'gerador_nome'>;
+export type Empresa = { id: string; nome: string; cnpj: string; telefone: string | null; email: string | null; endereco: string | null; cidade: string | null; contato: string | null; ativo: boolean };
+export type EmpresaInput = Omit<Empresa, 'id' | 'ativo'>;
+export type Planejamento = { id: string; gerador_id: string; gerador_nome?: string; empresa_id: string | null; empresa_nome: string; empresa_email: string; mes_execucao: number; dia_execucao: number; troca_oleo_filtros: boolean; periodicidade_bateria_anos: number; ultima_bateria: string | null; proxima_data: string };
+export type PlanejamentoInput = Omit<Planejamento, 'id' | 'gerador_nome' | 'empresa_nome' | 'empresa_email'>;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...init?.headers } });
@@ -46,3 +48,8 @@ export function listarPlanejamentos() { return request<{ planejamentos: Planejam
 export function criarPlanejamento(input: PlanejamentoInput) { return request<{ planejamento: Planejamento }>('/planejamento', { method: 'POST', body: JSON.stringify(input) }); }
 export function atualizarPlanejamento(id: string, input: Partial<PlanejamentoInput>) { return request<{ planejamento: Planejamento }>(`/planejamento/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); }
 export function apagarPlanejamento(id: string) { return request<{ ok: true }>(`/planejamento/${id}`, { method: 'DELETE' }); }
+
+export function listarEmpresas() { return request<{ empresas: Empresa[] }>('/empresas'); }
+export function criarEmpresa(input: EmpresaInput) { return request<{ empresa: Empresa }>('/empresas', { method: 'POST', body: JSON.stringify(input) }); }
+export function atualizarEmpresa(id: string, input: Partial<EmpresaInput>) { return request<{ empresa: Empresa }>(`/empresas/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function apagarEmpresa(id: string) { return request<{ ok: true }>(`/empresas/${id}`, { method: 'DELETE' }); }
