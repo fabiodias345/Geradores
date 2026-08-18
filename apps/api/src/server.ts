@@ -25,30 +25,30 @@ app.get('/storage/*', async (request, reply) => {
   if (!key || !key.startsWith('geradores/')) return reply.code(404).send({ error: 'foto não encontrada' });
   try { const foto = await obterFoto(key); return reply.type(foto.contentType).send(foto.body); } catch { return reply.code(404).send({ error: 'foto não encontrada' }); }
 });
-app.post('/auth/register', async (_request, reply) => reply.code(403).send({ error: 'cadastro pÃºblico desativado; usuÃ¡rio deve ser liberado pelo administrador' }));
+app.post('/auth/register', async (_request, reply) => reply.code(403).send({ error: 'cadastro público desativado; usuário deve ser liberado pelo administrador' }));
 
 app.post<{ Body: { identificador?: string; senha?: string } }>('/auth/login', async (request, reply) => {
   const { identificador, senha } = request.body ?? {};
-  if (!identificador || !senha) return reply.code(400).send({ error: 'login ou e-mail institucional e senha sÃ£o obrigatÃ³rios' });
+  if (!identificador || !senha) return reply.code(400).send({ error: 'login ou e-mail institucional e senha são obrigatórios' });
   try {
     const usuarioId = await autenticar(identificador, senha);
-    if (!usuarioId) return reply.code(401).send({ error: 'login, e-mail ou senha invÃ¡lidos ou nÃ£o liberados' });
+    if (!usuarioId) return reply.code(401).send({ error: 'login, e-mail ou senha inválidos ou não liberados' });
     await criarSessao(usuarioId, reply);
     return { usuario: await obterUsuario(request) };
-  } catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'identificador invÃ¡lido' }); }
+  } catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'identificador inválido' }); }
 });
 
 app.post('/auth/logout', async (request, reply) => { await encerrarSessao(request, reply); return { ok: true }; });
 app.get('/auth/me', async (request, reply) => {
   const usuario = await obterUsuario(request);
-  if (!usuario) return reply.code(401).send({ error: 'sessÃ£o invÃ¡lida ou expirada' });
+  if (!usuario) return reply.code(401).send({ error: 'sessão inválida ou expirada' });
   return { usuario };
 });
 
 async function usuarioAutenticado(request: FastifyRequest, reply: FastifyReply, perfis?: string[]) {
   const usuario = await obterUsuario(request);
-  if (!usuario) { await reply.code(401).send({ error: 'sessÃ£o invÃ¡lida ou expirada' }); return null; }
-  if (perfis && !perfis.includes(usuario.perfil)) { await reply.code(403).send({ error: 'perfil sem permissÃ£o para esta operaÃ§Ã£o' }); return null; }
+  if (!usuario) { await reply.code(401).send({ error: 'sessão inválida ou expirada' }); return null; }
+  if (perfis && !perfis.includes(usuario.perfil)) { await reply.code(403).send({ error: 'perfil sem permissão para esta operação' }); return null; }
   return usuario;
 }
 
@@ -63,23 +63,23 @@ app.post<{ Body: Partial<ServicoInput> }>('/servicos', async (request, reply) =>
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
   try { return reply.code(201).send({ servico: await criarServico(validarServico(request.body ?? {}) as ServicoInput, usuario.id) }); }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel criar a O.S.' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar a O.S.' }); }
 });
 
 app.patch<{ Params: { id: string }; Body: Partial<ServicoInput> }>('/servicos/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. inválido' });
   try { return { servico: await atualizarServico(request.params.id, validarServico(request.body ?? {}, true) as Partial<ServicoInput>, usuario.id) }; }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel editar a O.S.' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível editar a O.S.' }); }
 });
 
 app.delete<{ Params: { id: string } }>('/servicos/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. inválido' });
   try { await apagarServico(request.params.id, usuario.id); return { ok: true }; }
-  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'O.S. nÃ£o encontrada' }); }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'O.S. não encontrada' }); }
 });
 app.get('/empresas', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
@@ -89,21 +89,21 @@ app.post<{ Body: Partial<EmpresaInput> }>('/empresas', async (request, reply) =>
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
   try { return reply.code(201).send({ empresa: await criarEmpresa(validarEmpresa(request.body ?? {}) as EmpresaInput, usuario.id) }); }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel criar a empresa' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar a empresa' }); }
 });
 app.patch<{ Params: { id: string }; Body: Partial<EmpresaInput> }>('/empresas/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de empresa invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de empresa inválido' });
   try { return { empresa: await atualizarEmpresa(request.params.id, validarEmpresa(request.body ?? {}, true) as Partial<EmpresaInput>, usuario.id) }; }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel editar a empresa' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível editar a empresa' }); }
 });
 app.delete<{ Params: { id: string } }>('/empresas/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de empresa invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de empresa inválido' });
   try { await apagarEmpresa(request.params.id, usuario.id); return { ok: true }; }
-  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'empresa nÃ£o encontrada' }); }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'empresa não encontrada' }); }
 });app.get('/planejamento', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
   return { planejamentos: await listarPlanejamentos() };
@@ -112,21 +112,21 @@ app.post<{ Body: Partial<PlanejamentoInput> }>('/planejamento', async (request, 
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
   try { return reply.code(201).send({ planejamento: await criarPlanejamento(validarPlanejamento(request.body ?? {}) as PlanejamentoInput, usuario.id) }); }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel criar o planejamento' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar o planejamento' }); }
 });
 app.patch<{ Params: { id: string }; Body: Partial<PlanejamentoInput> }>('/planejamento/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de planejamento invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de planejamento inválido' });
   try { return { planejamento: await atualizarPlanejamento(request.params.id, validarPlanejamento(request.body ?? {}, true) as Partial<PlanejamentoInput>, usuario.id) }; }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel editar o planejamento' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível editar o planejamento' }); }
 });
 app.delete<{ Params: { id: string } }>('/planejamento/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de planejamento invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de planejamento inválido' });
   try { await apagarPlanejamento(request.params.id, usuario.id); return { ok: true }; }
-  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'planejamento nÃ£o encontrado' }); }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'planejamento não encontrado' }); }
 });
 app.get('/administradores', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador'])) return;
@@ -137,24 +137,24 @@ app.post<{ Body: Partial<AdministradorInput> }>('/administradores', async (reque
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
   try { return reply.code(201).send({ administrador: await criarAdministrador(validarAdministrador(request.body ?? {}) as AdministradorInput) }); }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel criar o administrador' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar o administrador' }); }
 });
 
 app.patch<{ Params: { id: string }; Body: Partial<AdministradorInput> }>('/administradores/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de administrador invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de administrador inválido' });
   try { return { administrador: await atualizarAdministrador(request.params.id, validarAdministrador(request.body ?? {}, true) as Partial<AdministradorInput>) }; }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel atualizar o administrador' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível atualizar o administrador' }); }
 });
 
 app.delete<{ Params: { id: string } }>('/administradores/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (usuario.id === request.params.id) return reply.code(400).send({ error: 'nÃ£o Ã© possÃ­vel inativar o prÃ³prio usuÃ¡rio' });
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de administrador invÃ¡lido' });
+  if (usuario.id === request.params.id) return reply.code(400).send({ error: 'não é possível inativar o próprio usuário' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de administrador inválido' });
   try { await desativarAdministrador(request.params.id); return { ok: true }; }
-  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'administrador nÃ£o encontrado' }); }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'administrador não encontrado' }); }
 });
 app.get('/tecnicos', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
@@ -165,23 +165,23 @@ app.post<{ Body: Partial<TecnicoInput> }>('/tecnicos', async (request, reply) =>
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
   try { return reply.code(201).send({ tecnico: await criarTecnico(validarTecnico(request.body ?? {}) as TecnicoInput, usuario.id) }); }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel criar o tÃ©cnico' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar o técnico' }); }
 });
 
 app.patch<{ Params: { id: string }; Body: Partial<TecnicoInput> }>('/tecnicos/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de tÃ©cnico invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de técnico inválido' });
   try { return { tecnico: await atualizarTecnico(request.params.id, validarTecnico(request.body ?? {}, true) as Partial<TecnicoInput>, usuario.id) }; }
-  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'nÃ£o foi possÃ­vel atualizar o tÃ©cnico' }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível atualizar o técnico' }); }
 });
 
 app.delete<{ Params: { id: string } }>('/tecnicos/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de tÃ©cnico invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de técnico inválido' });
   try { await desativarTecnico(request.params.id, usuario.id); return { ok: true }; }
-  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'tÃ©cnico nÃ£o encontrado' }); }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'técnico não encontrado' }); }
 });
 app.get('/geradores', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply)) return;
@@ -195,8 +195,8 @@ app.post<{ Body: Partial<GeradorInput> }>('/geradores', async (request, reply) =
     const gerador = validarGerador(request.body ?? {}) as GeradorInput;
     return reply.code(201).send({ gerador: await criarGerador(gerador, usuario.id) });
   } catch (error: unknown) {
-    if (error instanceof Error && (error.message.includes('obrigatÃ³rio') || error.message.includes('maior que'))) return reply.code(400).send({ error: error.message });
-    if (error instanceof Error && error.message.includes('duplicate key')) return reply.code(409).send({ error: 'identificaÃ§Ã£o jÃ¡ cadastrada' });
+    if (error instanceof Error && (error.message.includes('obrigatório') || error.message.includes('maior que'))) return reply.code(400).send({ error: error.message });
+    if (error instanceof Error && error.message.includes('duplicate key')) return reply.code(409).send({ error: 'identificação já cadastrada' });
     throw error;
   }
 });
@@ -204,14 +204,14 @@ app.post<{ Body: Partial<GeradorInput> }>('/geradores', async (request, reply) =
 app.patch<{ Params: { id: string }; Body: Partial<GeradorInput> }>('/geradores/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de gerador invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de gerador inválido' });
   try {
     const gerador = validarGerador(request.body ?? {}, true) as Partial<GeradorInput>;
     return { gerador: await atualizarGerador(request.params.id, gerador, usuario.id) };
   } catch (error: unknown) {
-    if (error instanceof Error && error.message.includes('nÃ£o encontrado')) return reply.code(404).send({ error: error.message });
-    if (error instanceof Error && error.message.includes('duplicate key')) return reply.code(409).send({ error: 'identificaÃ§Ã£o jÃ¡ cadastrada' });
-    if (error instanceof Error && (error.message.includes('obrigatÃ³rio') || error.message.includes('maior que'))) return reply.code(400).send({ error: error.message });
+    if (error instanceof Error && error.message.includes('não encontrado')) return reply.code(404).send({ error: error.message });
+    if (error instanceof Error && error.message.includes('duplicate key')) return reply.code(409).send({ error: 'identificação já cadastrada' });
+    if (error instanceof Error && (error.message.includes('obrigatório') || error.message.includes('maior que'))) return reply.code(400).send({ error: error.message });
     throw error;
   }
 });
@@ -219,9 +219,9 @@ app.patch<{ Params: { id: string }; Body: Partial<GeradorInput> }>('/geradores/:
 app.delete<{ Params: { id: string } }>('/geradores/:id', async (request, reply) => {
   const usuario = await usuarioAutenticado(request, reply, ['administrador']);
   if (!usuario) return;
-  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de gerador invÃ¡lido' });
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de gerador inválido' });
   try { await desativarGerador(request.params.id, usuario.id); return { ok: true }; }
-  catch (error: unknown) { if (error instanceof Error && error.message.includes('nÃ£o encontrado')) return reply.code(404).send({ error: error.message }); throw error; }
+  catch (error: unknown) { if (error instanceof Error && error.message.includes('não encontrado')) return reply.code(404).send({ error: error.message }); throw error; }
 });
 
 const port = Number(process.env.PORT ?? 4000);
