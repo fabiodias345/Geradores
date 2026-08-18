@@ -59,7 +59,8 @@ export default function HomePage() {
       </section>
       {podeEditar && <button className={styles.floatingAdd} onClick={abrirNovo}>+ Novo gerador</button>}
     </section>
-    {servicoView && <ServicePanel />} `r`n    {planejamentoView && <PlanningPanel />}
+    {servicoView && <ServicePanel />} 
+    {planejamentoView && <PlanningPanel />}
     {administracao && <AdminPanel podeEditar={usuario.perfil === "administrador"} geradores={geradores} novoGerador={abrirNovo} editarGerador={abrirEdicao} apagarGerador={remover} />}
     {aberto && <div className={styles.modalBackdrop} role="presentation"><section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="form-title"><div className={styles.modalHeader}><div><span className={styles.tableKicker}>DADOS DO ATIVO</span><h2 id="form-title">{editando ? 'Editar gerador' : 'Novo gerador'}</h2></div><button className={styles.closeButton} onClick={() => setAberto(false)} aria-label="Fechar">×</button></div><div className={styles.modalPhoto}>{formulario.foto_url ? <Image src={formulario.foto_url} alt="Prévia da foto do gerador" fill sizes="(max-width: 800px) 100vw, 260px" /> : <span>Nenhuma foto selecionada</span>}</div><form className={styles.generatorForm} onSubmit={salvar}>
   <div className={styles.formSection}><h3>GERAL</h3><label>Gerador Local<input value={formulario.gerador_local} onChange={(e) => alterar('gerador_local', e.target.value)} /></label><label>FUEL<input value={formulario.fuel} onChange={(e) => alterar('fuel', e.target.value)} placeholder="Número do patrimônio" /></label></div>
