@@ -10,6 +10,8 @@ export type Servico = { id: string; gerador_id: string; tecnico_id: string | nul
 export type ServicoInput = Omit<Servico, 'id' | 'gerador_nome' | 'tecnico_nome'>;
 export type Gerador = { id: string; identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number; numero_serie: string | null; tanque_capacidade_litros: number | null; foto_url: string | null; dados_tecnicos: DadosTecnicos; ativo: boolean };
 export type GeradorInput = Omit<Gerador, 'id' | 'ativo'>;
+export type Planejamento = { id: string; gerador_id: string; gerador_nome?: string; empresa_nome: string; empresa_email: string; mes_execucao: number; dia_execucao: number; troca_oleo_filtros: boolean; periodicidade_bateria_anos: number; ultima_bateria: string | null; proxima_data: string };
+export type PlanejamentoInput = Omit<Planejamento, 'id' | 'gerador_nome'>;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...init?.headers } });
@@ -28,15 +30,19 @@ export function desativarGerador(id: string) { return request<{ ok: true }>(`/ge
 
 export function listarTecnicos() { return request<{ tecnicos: Tecnico[] }>('/tecnicos'); }
 export function criarTecnico(input: TecnicoInput) { return request<{ tecnico: Tecnico }>('/tecnicos', { method: 'POST', body: JSON.stringify(input) }); }
-export function atualizarTecnico(id: string, input: Partial<TecnicoInput>) { return request<{ tecnico: Tecnico }>(/tecnicos/, { method: 'PATCH', body: JSON.stringify(input) }); }
-export function desativarTecnico(id: string) { return request<{ ok: true }>(/tecnicos/, { method: 'DELETE' }); }
+export function atualizarTecnico(id: string, input: Partial<TecnicoInput>) { return request<{ tecnico: Tecnico }>(`/tecnicos/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function desativarTecnico(id: string) { return request<{ ok: true }>(`/tecnicos/${id}`, { method: 'DELETE' }); }
 
 export function listarAdministradores() { return request<{ administradores: Administrador[] }>('/administradores'); }
 export function criarAdministrador(input: AdministradorInput) { return request<{ administrador: Administrador }>('/administradores', { method: 'POST', body: JSON.stringify(input) }); }
-export function atualizarAdministrador(id: string, input: Partial<AdministradorInput>) { return request<{ administrador: Administrador }>(/administradores/, { method: 'PATCH', body: JSON.stringify(input) }); }
-export function desativarAdministrador(id: string) { return request<{ ok: true }>(/administradores/, { method: 'DELETE' }); }
+export function atualizarAdministrador(id: string, input: Partial<AdministradorInput>) { return request<{ administrador: Administrador }>(`/administradores/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function desativarAdministrador(id: string) { return request<{ ok: true }>(`/administradores/${id}`, { method: 'DELETE' }); }
 
 export function listarServicos() { return request<{ servicos: Servico[] }>('/servicos'); }
 export function criarServico(input: ServicoInput) { return request<{ servico: Servico }>('/servicos', { method: 'POST', body: JSON.stringify(input) }); }
-export function atualizarServico(id: string, input: Partial<ServicoInput>) { return request<{ servico: Servico }>(/servicos/, { method: 'PATCH', body: JSON.stringify(input) }); }
-export function apagarServico(id: string) { return request<{ ok: true }>(/servicos/, { method: 'DELETE' }); }
+export function atualizarServico(id: string, input: Partial<ServicoInput>) { return request<{ servico: Servico }>(`/servicos/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function apagarServico(id: string) { return request<{ ok: true }>(`/servicos/${id}`, { method: 'DELETE' }); }
+export function listarPlanejamentos() { return request<{ planejamentos: Planejamento[] }>('/planejamento'); }
+export function criarPlanejamento(input: PlanejamentoInput) { return request<{ planejamento: Planejamento }>('/planejamento', { method: 'POST', body: JSON.stringify(input) }); }
+export function atualizarPlanejamento(id: string, input: Partial<PlanejamentoInput>) { return request<{ planejamento: Planejamento }>(`/planejamento/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); }
+export function apagarPlanejamento(id: string) { return request<{ ok: true }>(`/planejamento/${id}`, { method: 'DELETE' }); }

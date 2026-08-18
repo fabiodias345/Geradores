@@ -7,6 +7,8 @@ import { atualizarGerador, criarGerador, desativarGerador, listarGeradores, vali
 import { atualizarTecnico, criarTecnico, desativarTecnico, listarTecnicos, validarTecnico, type TecnicoInput } from './tecnicos.js';
 import { atualizarAdministrador, criarAdministrador, desativarAdministrador, listarAdministradores, validarAdministrador, type AdministradorInput } from './usuarios.js';
 import { apagarServico, atualizarServico, criarServico, listarServicos, validarServico, type ServicoInput } from './servicos.js';
+import { apagarPlanejamento, atualizarPlanejamento, criarPlanejamento, listarPlanejamentos, validarPlanejamento, type PlanejamentoInput } from './planejamento.js';
+import { enviarLembretesPlanejamento } from './planejamento-email.js';
 
 const app = Fastify({ logger: true });
 await app.register(cookie);
@@ -69,6 +71,30 @@ app.delete<{ Params: { id: string } }>('/servicos/:id', async (request, reply) =
   if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de O.S. inválido' });
   try { await apagarServico(request.params.id); return { ok: true }; }
   catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'O.S. não encontrada' }); }
+});
+app.get('/planejamento', async (request, reply) => {
+  if (!await usuarioAutenticado(request, reply, ['administrador', 'gestor'])) return;
+  return { planejamentos: await listarPlanejamentos() };
+});
+app.post<{ Body: Partial<PlanejamentoInput> }>('/planejamento', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
+  if (!usuario) return;
+  try { return reply.code(201).send({ planejamento: await criarPlanejamento(validarPlanejamento(request.body ?? {}) as PlanejamentoInput, usuario.id) }); }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível criar o planejamento' }); }
+});
+app.patch<{ Params: { id: string }; Body: Partial<PlanejamentoInput> }>('/planejamento/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de planejamento inválido' });
+  try { return { planejamento: await atualizarPlanejamento(request.params.id, validarPlanejamento(request.body ?? {}, true) as Partial<PlanejamentoInput>) }; }
+  catch (error: unknown) { return reply.code(400).send({ error: error instanceof Error ? error.message : 'não foi possível editar o planejamento' }); }
+});
+app.delete<{ Params: { id: string } }>('/planejamento/:id', async (request, reply) => {
+  const usuario = await usuarioAutenticado(request, reply, ['administrador', 'gestor']);
+  if (!usuario) return;
+  if (!idValido(request.params.id)) return reply.code(400).send({ error: 'id de planejamento inválido' });
+  try { await apagarPlanejamento(request.params.id); return { ok: true }; }
+  catch (error: unknown) { return reply.code(404).send({ error: error instanceof Error ? error.message : 'planejamento não encontrado' }); }
 });
 app.get('/administradores', async (request, reply) => {
   if (!await usuarioAutenticado(request, reply, ['administrador'])) return;
@@ -169,3 +195,5 @@ app.delete<{ Params: { id: string } }>('/geradores/:id', async (request, reply) 
 const port = Number(process.env.PORT ?? 4000);
 await executarMigrations();
 await app.listen({ host: '0.0.0.0', port });
+void enviarLembretesPlanejamento().catch((error) => app.log.error(error, 'falha ao enviar lembretes do planejamento'));
+setInterval(() => void enviarLembretesPlanejamento().catch((error) => app.log.error(error, 'falha ao enviar lembretes do planejamento')), 24 * 60 * 60 * 1000);

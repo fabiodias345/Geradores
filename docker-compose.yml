@@ -20,6 +20,12 @@ services:
       STORAGE_ENDPOINT: http://storage:9000
       STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-geradores}
       STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-troque-este-valor-local}
+      SMTP_HOST: 
+      SMTP_PORT: 
+      SMTP_SECURE: 
+      SMTP_USER: 
+      SMTP_PASSWORD: 
+      SMTP_FROM: 
     ports:
       - "${API_PORT:-4000}:4000"
     depends_on:
