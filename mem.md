@@ -52,7 +52,7 @@ Status: concluída.
 
 Testes: TypeScript da API, build Next.js, migration e tabela, endpoint sem sessão `401`, login temporário `200`, criação `201`, listagem, edição e desativação; dados temporários removidos.
 
-### Fase 05 — Liberação de usuários no painel
+### Fase 05 concluída: OS, planejamento preventivo, empresas e técnicos implementados.
 
 Status: próxima.
 

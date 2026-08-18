@@ -20,6 +20,7 @@ services:
       STORAGE_ENDPOINT: http://storage:9000
       STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-geradores}
       STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-troque-este-valor-local}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-geradores-fotos}
       SMTP_HOST: 
       SMTP_PORT: 
       SMTP_SECURE: 
@@ -68,6 +69,17 @@ services:
       - storage_data:/data
     restart: unless-stopped
 
+  storage-init:
+    image: minio/mc:latest
+    depends_on:
+      storage:
+        condition: service_started
+    entrypoint: /bin/sh
+    command: -c "until mc alias set local http://storage:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 1; done; mc mb --ignore-existing local/$${STORAGE_BUCKET}; exit 0"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-geradores}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-troque-este-valor-local}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-geradores-fotos}
 volumes:
   postgres_data:
   storage_data:

@@ -1,32 +1,15 @@
-import type { PoolClient } from 'pg';
-import { pool } from './db.js';
+﻿import { pool } from './db.js';
+import { registrarAuditoria } from './auditoria.js';
+import { armazenarFoto } from './storage.js';
 
 export type GeradorInput = {
-  identificacao: string;
-  localizacao: string;
-  predio: string;
-  modelo: string;
-  potencia_kva: number;
-  numero_serie?: string | null;
-  tanque_capacidade_litros?: number | null;
-  foto_url?: string | null;
+  identificacao: string; localizacao: string; predio: string; modelo: string; potencia_kva: number;
+  numero_serie?: string | null; tanque_capacidade_litros?: number | null; foto_url?: string | null;
   dados_tecnicos?: Record<string, string> | null;
 };
 
-function texto(valor: unknown, campo: string) {
-  if (typeof valor !== 'string' || !valor.trim()) throw new Error(`${campo} é obrigatório`);
-  return valor.trim();
-}
-
-function numero(valor: unknown, campo: string, obrigatorio = false) {
-  if (valor === null || valor === undefined || valor === '') {
-    if (obrigatorio) throw new Error(`${campo} é obrigatório`);
-    return null;
-  }
-  const resultado = Number(valor);
-  if (!Number.isFinite(resultado) || resultado <= 0) throw new Error(`${campo} deve ser maior que zero`);
-  return resultado;
-}
+function texto(valor: unknown, campo: string) { if (typeof valor !== 'string' || !valor.trim()) throw new Error(`${campo} é obrigatório`); return valor.trim(); }
+function numero(valor: unknown, campo: string, obrigatorio = false) { if (valor === null || valor === undefined || valor === '') { if (obrigatorio) throw new Error(`${campo} é obrigatório`); return null; } const resultado = Number(valor); if (!Number.isFinite(resultado) || resultado <= 0) throw new Error(`${campo} deve ser maior que zero`); return resultado; }
 
 export function validarGerador(input: Partial<GeradorInput>, parcial = false): GeradorInput | Partial<GeradorInput> {
   const resultado: Partial<GeradorInput> = {};
@@ -42,30 +25,18 @@ export function validarGerador(input: Partial<GeradorInput>, parcial = false): G
   return resultado;
 }
 
-function auditar(client: PoolClient, usuarioId: string, operacao: string, id: string, anterior: unknown, novo: unknown) {
-  return client.query(
-    'insert into registro_auditoria (usuario_id, entidade, entidade_id, operacao, dados_anteriores, dados_novos) values ($1, $2, $3, $4, $5, $6)',
-    [usuarioId, 'gerador', id, operacao, anterior ? JSON.stringify(anterior) : null, novo ? JSON.stringify(novo) : null],
-  );
-}
-
-export async function listarGeradores() {
-  const result = await pool.query('select * from gerador where ativo = true order by predio, identificacao');
-  return result.rows;
-}
+export async function listarGeradores() { return (await pool.query('select * from gerador where ativo = true order by predio, identificacao')).rows; }
 
 export async function criarGerador(input: GeradorInput, usuarioId: string) {
   const client = await pool.connect();
   try {
     await client.query('begin');
-    const result = await client.query(
-      `insert into gerador (identificacao, localizacao, predio, modelo, potencia_kva, numero_serie, tanque_capacidade_litros, foto_url, dados_tecnicos, criado_por, atualizado_por)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10) returning *`,
-      [input.identificacao, input.localizacao, input.predio, input.modelo, input.potencia_kva, input.numero_serie ?? null, input.tanque_capacidade_litros ?? null, input.foto_url ?? null, input.dados_tecnicos ?? {}, usuarioId],
-    );
-    await auditar(client, usuarioId, 'criar', result.rows[0].id, null, result.rows[0]);
+    const result = await client.query(`insert into gerador (identificacao, localizacao, predio, modelo, potencia_kva, numero_serie, tanque_capacidade_litros, foto_url, dados_tecnicos, criado_por, atualizado_por) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10) returning *`, [input.identificacao, input.localizacao, input.predio, input.modelo, input.potencia_kva, input.numero_serie ?? null, input.tanque_capacidade_litros ?? null, null, input.dados_tecnicos ?? {}, usuarioId]);
+    const fotoUrl = input.foto_url ? await armazenarFoto(input.foto_url, result.rows[0].id) : null;
+    const final = fotoUrl ? (await client.query('update gerador set foto_url=$1 where id=$2 returning *', [fotoUrl, result.rows[0].id])).rows[0] : result.rows[0];
+    await registrarAuditoria(client, usuarioId, 'gerador', final.id, 'criar', null, final);
     await client.query('commit');
-    return result.rows[0];
+    return final;
   } catch (error) { await client.query('rollback'); throw error; } finally { client.release(); }
 }
 
@@ -76,12 +47,9 @@ export async function atualizarGerador(id: string, input: Partial<GeradorInput>,
     const anterior = await client.query('select * from gerador where id = $1 and ativo = true for update', [id]);
     if (!anterior.rowCount) throw new Error('gerador não encontrado');
     const atual = { ...anterior.rows[0], ...input };
-    const result = await client.query(
-      `update gerador set identificacao=$1, localizacao=$2, predio=$3, modelo=$4, potencia_kva=$5, numero_serie=$6, tanque_capacidade_litros=$7, foto_url=$8, dados_tecnicos=$9, atualizado_por=$10, atualizado_em=now()
-       where id=$11 returning *`,
-      [atual.identificacao, atual.localizacao, atual.predio, atual.modelo, atual.potencia_kva, atual.numero_serie ?? null, atual.tanque_capacidade_litros ?? null, atual.foto_url ?? null, atual.dados_tecnicos ?? {}, usuarioId, id],
-    );
-    await auditar(client, usuarioId, 'atualizar', id, anterior.rows[0], result.rows[0]);
+    const fotoUrl = input.foto_url?.startsWith('data:image/') ? await armazenarFoto(input.foto_url, id) : atual.foto_url ?? null;
+    const result = await client.query(`update gerador set identificacao=$1, localizacao=$2, predio=$3, modelo=$4, potencia_kva=$5, numero_serie=$6, tanque_capacidade_litros=$7, foto_url=$8, dados_tecnicos=$9, atualizado_por=$10, atualizado_em=now() where id=$11 returning *`, [atual.identificacao, atual.localizacao, atual.predio, atual.modelo, atual.potencia_kva, atual.numero_serie ?? null, atual.tanque_capacidade_litros ?? null, fotoUrl, atual.dados_tecnicos ?? {}, usuarioId, id]);
+    await registrarAuditoria(client, usuarioId, 'gerador', id, 'atualizar', anterior.rows[0], result.rows[0]);
     await client.query('commit');
     return result.rows[0];
   } catch (error) { await client.query('rollback'); throw error; } finally { client.release(); }
@@ -89,12 +57,6 @@ export async function atualizarGerador(id: string, input: Partial<GeradorInput>,
 
 export async function desativarGerador(id: string, usuarioId: string) {
   const client = await pool.connect();
-  try {
-    await client.query('begin');
-    const anterior = await client.query('select * from gerador where id = $1 and ativo = true for update', [id]);
-    if (!anterior.rowCount) throw new Error('gerador não encontrado');
-    const result = await client.query('update gerador set ativo=false, atualizado_por=$1, atualizado_em=now() where id=$2 returning *', [usuarioId, id]);
-    await auditar(client, usuarioId, 'desativar', id, anterior.rows[0], result.rows[0]);
-    await client.query('commit');
-  } catch (error) { await client.query('rollback'); throw error; } finally { client.release(); }
+  try { await client.query('begin'); const anterior = await client.query('select * from gerador where id = $1 and ativo = true for update', [id]); if (!anterior.rowCount) throw new Error('gerador não encontrado'); const result = await client.query('update gerador set ativo=false, atualizado_por=$1, atualizado_em=now() where id=$2 returning *', [usuarioId, id]); await registrarAuditoria(client, usuarioId, 'gerador', id, 'desativar', anterior.rows[0], result.rows[0]); await client.query('commit'); }
+  catch (error) { await client.query('rollback'); throw error; } finally { client.release(); }
 }

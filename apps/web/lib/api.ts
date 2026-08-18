@@ -1,5 +1,7 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
+export function resolverFotoUrl(valor: string | null) { return valor?.startsWith("storage://") ? apiUrl + "/storage/" + encodeURIComponent(valor.slice("storage://".length)) : valor; }
+
 export type UsuarioSessao = { id: string; email: string | null; login: string | null; nome: string; perfil: 'administrador' | 'gestor' | 'tecnico' };
 export type DadosTecnicos = Record<string, string>;
 export type Tecnico = { id: string; nome: string; documento: string | null; telefone_whatsapp: string | null; email: string | null; especialidade: string | null; acesso_app: boolean; perfil: 'tecnico' | 'tecnico_pro'; ativo: boolean };
@@ -18,7 +20,7 @@ export type PlanejamentoInput = Omit<Planejamento, 'id' | 'gerador_nome' | 'empr
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...init?.headers } });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error ?? 'Não foi possível concluir a operação');
+  if (!response.ok) throw new Error(data.error ?? 'NÃƒÂ£o foi possÃƒÂ­vel concluir a operaÃƒÂ§ÃƒÂ£o');
   return data as T;
 }
 
