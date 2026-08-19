@@ -30,3 +30,10 @@
 .adminPlaceholder h2 { margin:0 0 10px; color:#eff5ed; font-size:20px; }
 .adminPlaceholder p { max-width:620px; color:#80aaa1; font-size:13px; line-height:1.6; }
 .adminPlaceholder button { margin-top:12px; border:1px solid #31574e; border-radius:5px; padding:10px 13px; color:#789b92; background:transparent; }
+
+.generatorTable { min-width: 900px !important; }
+.generatorTable th:first-child, .generatorTable td:first-child { width: 78px; }
+.generatorThumb { width: 52px; height: 42px; overflow: hidden; display: grid; place-items: center; border: 1px solid #31574e; border-radius: 6px; background: #071611; color: #b8df46; font: 700 18px Georgia, serif; }
+.generatorThumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.generatorTable td { vertical-align: middle; }
+.generatorTable .actions { width: 150px; }
