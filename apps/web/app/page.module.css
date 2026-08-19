@@ -44,7 +44,7 @@
 .generatorPhoto { width:150px; height:110px; flex:none; object-fit:cover; border-radius:9px; border:1px solid #31574e; }
 .generatorCardContent { display:flex; flex:1; min-width:0; flex-direction:column; }
 .modalPhoto { position:relative; height:220px; margin:24px 28px 0; overflow:hidden; border:1px solid #31574e; border-radius:8px; background:#071611; }
-.modalPhoto img { object-fit:cover; }
+.modalPhoto img { width:100%; height:100%; object-fit:cover; display:block; }
 .modalPhoto span { display:grid; height:100%; place-items:center; color:#79a69c; font-size:12px; }
 @media(max-width:800px) { .generatorCard { flex-direction:column; } .generatorPhoto { width:100%; height:180px; } .photoPlaceholder { width:100%; height:180px; } .modalPhoto { margin-inline:20px; } }
 
