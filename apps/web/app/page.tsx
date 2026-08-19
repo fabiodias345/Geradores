@@ -6,6 +6,7 @@ import styles from './page.module.css';
 import AdminPanel from './admin-panel';
 import ServicePanel from './service-panel';
 import PlanningPanel from './planning-panel';
+import SupervisoryPanel from './supervisory-panel';
 import { atualizarGerador, criarGerador, desativarGerador, getSession, listarGeradores, logout, resolverFotoUrl, type Gerador, type GeradorInput, type UsuarioSessao } from '../lib/api';
 
 type Formulario = {
@@ -50,16 +51,7 @@ export default function HomePage() {
       <nav aria-label="Navegação principal"><a className={!administracao && !servicoView && !planejamentoView ? "active" : ""} href="#supervisorio" onClick={(event) => { event.preventDefault(); setAdministracao(false); setServicoView(false); setPlanejamentoView(false); }}>Supervisório</a><a className={servicoView ? "active" : ""} href="#servicos" onClick={(event) => { event.preventDefault(); setAdministracao(false); setPlanejamentoView(false); setServicoView(true); }}>Serviços</a><a className={planejamentoView ? "active" : ""} href="#planejamento" onClick={(event) => { event.preventDefault(); setAdministracao(false); setServicoView(false); setPlanejamentoView(true); }}>Planejamento</a><a className={administracao ? "active" : ""} href="#administracao" onClick={(event) => { event.preventDefault(); setServicoView(false); setPlanejamentoView(false); setAdministracao(true); }}>Administração</a></nav>
       <div className="account"><button>{usuario.nome || identificador}</button><button className={styles.logoutButton} onClick={sair}>Sair</button></div>
     </header>
-    <section className={`dashboard-content ${administracao || servicoView || planejamentoView ? styles.hidden : ""}`} id="geradores">
-      <div className={styles.pageHeading}><div><p className="eyebrow">SUPERVISÓRIO · VISÃO GERAL</p><h1>Estado da frota</h1><p className="lead">Selecione um gerador para consultar os detalhes operacionais.</p></div><div className="system-status"><strong>• SISTEMA ONLINE</strong><span>Dados disponíveis na base operacional</span></div></div>
-      {erro && !aberto && <p className={styles.feedback}>{erro}</p>}
-      <section className={styles.fleetCard}>
-        <div className={styles.fleetHeader}><h2>{geradores.length} {geradores.length === 1 ? 'gerador monitorado' : 'geradores monitorados'}</h2><span>clique em um equipamento para abrir</span></div>
-        {geradores.length === 0 ? <div className={styles.empty}><div className={styles.emptyMark}>H</div><h3>Nenhum gerador cadastrado</h3><p>Cadastre o primeiro equipamento para acompanhar a frota.</p>{podeEditar && <button className={styles.textButton} onClick={abrirNovo}>Cadastrar primeiro gerador →</button>}</div> : <div className={styles.generatorGrid}>{geradores.map((g) => <article className={styles.generatorCard} key={g.id} onClick={() => abrirEdicao(g)}>{g.foto_url ? <Image className={styles.generatorPhoto} src={resolverFotoUrl(g.foto_url) || ""} alt={`Foto de ${g.identificacao}`} width={150} height={110} /> : <div className={styles.photoPlaceholder}>Sem foto</div>}<div className={styles.generatorCardContent}><h3>{g.identificacao}</h3><strong>{g.dados_tecnicos?.gerador_numero_serie || 'Sem número de série'}</strong><span className={styles.machineStatus}><i /> PARADO</span><div className={styles.cardDivider} /><b>Funcionamento <em>–</em></b><small>{g.predio} · {g.localizacao}</small>{podeDesativar && <button className={styles.cardAction} onClick={(event) => { event.stopPropagation(); remover(g); }}>Desativar</button>}</div></article>)}</div>}
-      </section>
-      {podeEditar && <button className={styles.floatingAdd} onClick={abrirNovo}>+ Novo gerador</button>}
-    </section>
-    {servicoView && <ServicePanel />} 
+    {!administracao && !servicoView && !planejamentoView && <SupervisoryPanel geradores={geradores} podeEditar={podeEditar} novoGerador={abrirNovo} />}\n    {servicoView && <ServicePanel />}
     {planejamentoView && <PlanningPanel />}
     {administracao && <AdminPanel podeEditar={usuario.perfil === "administrador"} geradores={geradores} novoGerador={abrirNovo} editarGerador={abrirEdicao} apagarGerador={remover} />}
     {aberto && <div className={styles.modalBackdrop} role="presentation"><section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="form-title"><div className={styles.modalHeader}><div><span className={styles.tableKicker}>DADOS DO ATIVO</span><h2 id="form-title">{editando ? 'Editar gerador' : 'Novo gerador'}</h2></div><button className={styles.closeButton} onClick={() => setAberto(false)} aria-label="Fechar">×</button></div><div className={styles.modalPhoto}>{formulario.foto_url ? <Image src={resolverFotoUrl(formulario.foto_url) || ""} alt="Prévia da foto do gerador" fill sizes="(max-width: 800px) 100vw, 260px" /> : <span>Nenhuma foto selecionada</span>}</div><form className={styles.generatorForm} onSubmit={salvar}>

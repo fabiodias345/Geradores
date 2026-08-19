@@ -34,9 +34,9 @@ export default function LoginPage() {
             <span className={styles.headerTag}>HUL</span>
           </header>
           <div className={styles.intro}>
-            <p className={styles.kicker}>ÁREA RESTRITA · MANUTENÇÃO</p>
-            <h1>Controle que mantém<br /><em>tudo ligado.</em></h1>
-            <p className={styles.description}>Acompanhe os ativos, as ordens de serviço e a rotina preventiva dos geradores do Hospital Universitário de Londrina.</p>
+            <p className={styles.kicker}>ACESSO RESTRITO · HUL</p>
+            <h1>Energia sob<br /><em>controle.</em></h1>
+            <p className={styles.description}>Geradores, manutenção e alertas em um só lugar.</p>
           </div>
           <form className={styles.form} onSubmit={handleSubmit}>
             <label className={styles.field}><span>Login ou e-mail institucional</span><input type="text" value={identificador} onChange={(event) => setIdentificador(event.target.value)} autoComplete="username" placeholder="seu.login ou nome@uel.br" required /></label>
@@ -44,14 +44,14 @@ export default function LoginPage() {
             {erro && <p className={styles.error} role="alert">{erro}</p>}
             <button className={styles.submit} disabled={enviando} type="submit"><span>{enviando ? 'Validando acesso' : 'Acessar painel'}</span><b>↗</b></button>
           </form>
-          <footer className={styles.footer}><span>HUL · Gestão de geradores</span><span>Ambiente local</span></footer>
+          <footer className={styles.footer}><span>HUL · Supervisório</span><span>Ambiente protegido</span></footer>
         </div>
       </section>
-      <aside className={styles.visualPanel} aria-label="Gerador do Hospital Universitário de Londrina">
-        <Image className={styles.heroImage} src="/gerador-hul.png" alt="Gerador de emergência instalado no Hospital Universitário de Londrina" fill priority sizes="(max-width: 900px) 100vw, 57vw" />
+      <aside className={styles.visualPanel} aria-label="Supervisório de geradores">
+        <Image className={styles.heroImage} src="/gerador-hul.png" alt="Gerador do Hospital Universitário de Londrina" fill priority sizes="(max-width: 900px) 100vw, 57vw" />
         <div className={styles.imageShade} />
-        <div className={styles.visualTop}><span className={styles.liveDot} /> SISTEMA DE OPERAÇÃO</div>
-        <div className={styles.visualCopy}><p>Prevenir, automatizar,<br /><strong>monitorar:</strong></p><span>energia que não falha.</span></div>
+        <div className={styles.visualTop}><span className={styles.liveDot} /> OPERAÇÃO ONLINE</div>
+        <div className={styles.visualCopy}><p>Prevenir.<br /><strong>Monitorar.</strong></p><span>supervisão de geradores.</span></div>
       </aside>
     </main>
   );

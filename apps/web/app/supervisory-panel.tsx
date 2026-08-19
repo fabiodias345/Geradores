@@ -1,0 +1,46 @@
+'use client';
+
+import { useState } from 'react';
+import styles from './supervisory-panel.module.css';
+import { atualizarGerador, type Gerador } from '../lib/api';
+
+type Props = { geradores: Gerador[]; podeEditar: boolean; novoGerador: () => void };
+type Status = 'funcionando' | 'alerta' | 'parado' | 'sem_telemetria';
+const statusLabel: Record<Status, string> = { funcionando: 'Funcionando', alerta: 'Alerta', parado: 'Parado', sem_telemetria: 'Sem telemetria' };
+const ler = (g: Gerador, ...chaves: string[]) => chaves.map((chave) => g.dados_tecnicos?.[chave]).find(Boolean) ?? '—';
+
+function obterStatus(g: Gerador): Status {
+  const valor = String(g.dados_tecnicos?.status ?? g.dados_tecnicos?.estado ?? '').toLowerCase();
+  if (/(funcion|running|operando|partid)/.test(valor)) return 'funcionando';
+  if (/(alert|falha|alarme|warning)/.test(valor)) return 'alerta';
+  if (/(parad|stopped|deslig)/.test(valor)) return 'parado';
+  return 'sem_telemetria';
+}
+
+function Gauge({ rpm }: { rpm: string }) {
+  return <div className={styles.gauge}><div className={styles.gaugeArc}><span className={styles.gaugeNeedle} /></div><strong>{rpm}</strong><small>RPM</small></div>;
+}
+
+function ModbusTab({ gerador, atualizar }: { gerador: Gerador; atualizar: (g: Gerador) => void }) {
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [form, setForm] = useState({ modulo: ler(gerador, 'esp32_modelo') === '—' ? 'HF-006Enet' : ler(gerador, 'esp32_modelo'), rede: ler(gerador, 'esp32_rede') === '—' ? 'Ethernet' : ler(gerador, 'esp32_rede'), ip: ler(gerador, 'esp32_ip'), mac: ler(gerador, 'esp32_mac'), firmware: ler(gerador, 'esp32_firmware'), protocolo: ler(gerador, 'modbus_protocolo') === '—' ? 'Modbus RTU' : ler(gerador, 'modbus_protocolo'), baudrate: ler(gerador, 'modbus_baudrate') === '—' ? '19200' : ler(gerador, 'modbus_baudrate'), servidor: ler(gerador, 'modbus_servidor') === '—' ? '10' : ler(gerador, 'modbus_servidor'), paridade: ler(gerador, 'modbus_paridade') === '—' ? 'A confirmar' : ler(gerador, 'modbus_paridade'), stopBits: ler(gerador, 'modbus_stop_bits') === '—' ? 'A confirmar' : ler(gerador, 'modbus_stop_bits'), pinagem: ler(gerador, 'modbus_pinagem') === '—' ? '56 blindagem · 57 B+ · 58 A-' : ler(gerador, 'modbus_pinagem'), terminacao: ler(gerador, 'modbus_terminacao') === '—' ? '120 Ω nas extremidades' : ler(gerador, 'modbus_terminacao') });
+  async function salvar() { setSalvando(true); setErro(''); try { const resultado = await atualizarGerador(gerador.id, { dados_tecnicos: { ...gerador.dados_tecnicos, esp32_modelo: form.modulo, esp32_rede: form.rede, esp32_ip: form.ip, esp32_mac: form.mac, esp32_firmware: form.firmware, modbus_protocolo: form.protocolo, modbus_baudrate: form.baudrate, modbus_servidor: form.servidor, modbus_paridade: form.paridade, modbus_stop_bits: form.stopBits, modbus_pinagem: form.pinagem, modbus_terminacao: form.terminacao } }); atualizar(resultado.gerador); } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível salvar a configuração Modbus'); } finally { setSalvando(false); } }
+  const campos: [keyof typeof form, string][] = [['modulo', 'Módulo ESP32'], ['rede', 'Rede'], ['ip', 'IP Ethernet'], ['mac', 'MAC'], ['firmware', 'Firmware'], ['protocolo', 'Protocolo'], ['baudrate', 'Baud rate'], ['servidor', 'ID do servidor'], ['paridade', 'Paridade'], ['stopBits', 'Stop bits'], ['pinagem', 'Pinagem RS485'], ['terminacao', 'Terminação']];
+  return <section className={styles.modbusCard}><div className={styles.cardHeading}><div><p className={styles.kicker}>GATEWAY DO GERADOR</p><h2>ESP32 HF-006Enet + Modbus RTU</h2></div><span>Somente leitura nesta fase</span></div><div className={styles.modbusNotice}>Este módulo pertence a este gerador. Ele será mestre Modbus do controlador local e enviará a telemetria pela Ethernet. Nenhum comando de partida ou parada é habilitado.</div><div className={styles.modbusForm}>{campos.map(([campo, label]) => <label key={campo}>{label}<input value={form[campo]} onChange={(e) => setForm((atual) => ({ ...atual, [campo]: e.target.value }))} /></label>)}</div>{erro && <p className={styles.modbusError}>{erro}</p>}<button className={styles.saveModbus} onClick={salvar} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar dados do ESP32'}</button></section>;
+}
+
+function Detalhes({ inicial, voltar }: { inicial: Gerador; voltar: () => void }) {
+  const [gerador, setGerador] = useState(inicial);
+  const [aba, setAba] = useState<'resumo' | 'modbus'>('resumo');
+  const status = obterStatus(gerador);
+  const cards: [string, string, string][] = [['Tensão', ler(gerador, 'tensao', 'tensao_ac', 'tensao_gerador'), 'V'], ['Frequência', ler(gerador, 'frequencia', 'frequencia_hz'), 'Hz'], ['Carga ativa', ler(gerador, 'kw', 'potencia_kw', 'carga_kw'), 'kW'], ['Combustível', ler(gerador, 'combustivel', 'nivel_combustivel'), '%'], ['Bateria', ler(gerador, 'bateria', 'tensao_bateria'), 'V'], ['Temperatura', ler(gerador, 'temperatura', 'temperatura_motor'), '°C']];
+  return <section className={styles.detailShell}><button className={styles.backButton} onClick={voltar}>← Voltar para a frota</button><header className={styles.detailHeader}><div><p className={styles.kicker}>DETALHES DO EQUIPAMENTO</p><h1>{gerador.identificacao}</h1><p>{gerador.predio} · {gerador.localizacao} · {gerador.modelo}</p></div><span className={`${styles.statusPill} ${styles[status]}`}><i />{statusLabel[status]}</span></header><nav className={styles.detailTabs}><button className={aba === 'resumo' ? styles.activeTab : ''} onClick={() => setAba('resumo')}>Resumo técnico</button><button className={aba === 'modbus' ? styles.activeTab : ''} onClick={() => setAba('modbus')}>Configuração Modbus</button></nav>{aba === 'modbus' ? <ModbusTab gerador={gerador} atualizar={setGerador} /> : <div className={styles.detailGrid}><section className={styles.heroCard}><div><p className={styles.kicker}>ROTAÇÃO DO MOTOR</p><Gauge rpm={ler(gerador, 'rpm', 'rotacao_rpm', 'velocidade_motor')} /></div><div className={styles.heroMeta}><span>Controlador</span><strong>{ler(gerador, 'controlador', 'usca_modelo') === '—' ? 'DSE / USCA' : ler(gerador, 'controlador', 'usca_modelo')}</strong><span>Última comunicação</span><strong>{ler(gerador, 'ultima_leitura', 'ultima_comunicacao')}</strong></div></section><section className={styles.metrics}>{cards.map(([label, reading, unit]) => <article key={label}><span>{label}</span><strong>{reading}<small>{reading === '—' ? '' : unit}</small></strong></article>)}</section><section className={styles.chartCard}><div className={styles.cardHeading}><div><p className={styles.kicker}>DESEMPENHO</p><h2>Carga e frequência</h2></div><span>Dados reais · últimas leituras</span></div><div className={styles.emptyChart}><div className={styles.chartGrid} /><strong>Aguardando telemetria</strong><span>O gráfico será preenchido quando o módulo estiver conectado.</span></div></section><section className={styles.sideCard}><div className={styles.cardHeading}><div><p className={styles.kicker}>SEGURANÇA</p><h2>Alarmes</h2></div></div><div className={styles.noAlarm}><span>✓</span><div><strong>Nenhum alarme recebido</strong><small>Sem eventos disponíveis para este equipamento.</small></div></div></section></div>}</section>;
+}
+
+export default function SupervisoryPanel({ geradores, podeEditar, novoGerador }: Props) {
+  const [selecionado, setSelecionado] = useState<Gerador | null>(null);
+  if (selecionado) return <Detalhes inicial={selecionado} voltar={() => setSelecionado(null)} />;
+  const counts = (['funcionando', 'alerta', 'parado'] as Status[]).map((status) => geradores.filter((g) => obterStatus(g) === status).length);
+  return <section className={styles.shell}><header className={styles.heading}><div><p className={styles.kicker}>SUPERVISÓRIO · VISÃO RÁPIDA</p><h1>Situação da frota</h1><p>Toque em um gerador para abrir os dados técnicos e os gráficos.</p></div><div className={styles.summary}><strong>{geradores.length}</strong><span>equipamentos cadastrados</span></div></header><div className={styles.statusBar}><span><i className={styles.dotGreen} />{counts[0]} funcionando</span><span><i className={styles.dotAmber} />{counts[1]} em alerta</span><span><i className={styles.dotSlate} />{counts[2]} parados</span></div>{geradores.length === 0 ? <div className={styles.empty}><strong>Nenhum gerador cadastrado</strong><span>Cadastre um equipamento para iniciar o supervisório.</span>{podeEditar && <button onClick={novoGerador}>+ Cadastrar gerador</button>}</div> : <div className={styles.fleetGrid}>{geradores.map((gerador, index) => { const status = obterStatus(gerador); return <button className={styles.fleetCard} key={gerador.id} onClick={() => setSelecionado(gerador)}><span className={styles.cardIndex}>{String(index + 1).padStart(2, '0')}</span><span className={styles.fleetName}>{gerador.identificacao}</span><span className={`${styles.cardStatus} ${styles[status]}`}><i />{statusLabel[status]}</span><span className={styles.fleetLocation}>{gerador.predio} · {gerador.localizacao}</span><span className={styles.openHint}>Abrir detalhes <b>↗</b></span></button>; })}</div>}{podeEditar && geradores.length > 0 && <button className={styles.addButton} onClick={novoGerador}>+ Novo gerador</button>}</section>;
+}

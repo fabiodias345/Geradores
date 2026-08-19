@@ -80,3 +80,35 @@ docker-compose.yml
 mem.md
 prd.md
 ```
+
+## Integração ESP32 + Deep Sea 7320
+
+Decisão de arquitetura: usar a placa PLC industrial HF-006Enet, baseada em ESP32, com Ethernet W5500, Wi-Fi, RS485 Modbus RTU e I/O industriais, como gateway de telemetria. O ESP32 será o mestre Modbus RTU; o controlador Deep Sea 7320 será configurado como escravo, com endereço, baud rate, paridade, stop bits e timeout confirmados no DSE Configuration Suite. Não ligar o ESP32 diretamente ao banco ou ao navegador.
+
+Topologia proposta: cada gerador compatível terá seu próprio módulo PLC HF-006Enet. Um gerador com DSE8610 já possui comunicação direta e não exige módulo neste desenho inicial; dois pontos possuem USCA diferentes e a estratégia será decidida quando forem avaliados. Em cada ponto com módulo: DSE7320 → RS485 local → HF-006Enet. O módulo de cada gerador será ligado por cabo Ethernet à rede e enviará sua telemetria individual para a API Geradores HUL → PostgreSQL/Storage → painel web. O ESP32 deve publicar leituras periódicas por HTTPS autenticado ou MQTT com TLS; a API valida o dispositivo, registra a leitura e atualiza o último estado do gerador.
+
+Dados iniciais: tensão de bateria, rotação, frequência, tensão/corrente, potência, fator de potência, horas de funcionamento, combustível, temperatura, pressão de óleo, modo de operação, estado do grupo e alarmes. O mapa oficial de registradores Modbus do DSE deve ser obtido para o modelo/firmware e serial do controlador antes de implementar os endereços; o manual confirma que o DSE7320 opera como escravo Modbus RTU e que o mapa Gencomm é fornecido pela Deep Sea Electronics.
+
+Incorporação ao sistema: adicionar `dispositivo_telemetria` vinculado a `gerador`, `telemetria_leitura` para valores com timestamp, `telemetria_alarme` para transições de alarme e `ultimo_contato_em`/qualidade da comunicação. No painel, exibir estado online/offline, última leitura, valores atuais e histórico; não preencher lacunas com dados fictícios. Ações de comando remoto, incluindo AUTO/PARADA e acionamento/desligamento, ficam fora da primeira fase. A integração inicial será exclusivamente de leitura/telemetria; comandos só serão avaliados em uma fase posterior, com validação elétrica, permissões e auditoria.
+
+Segurança e instalação: usar transceptor RS485 industrial adequado, proteção contra surto/isolação quando necessária, par trançado, aterramento conforme o projeto elétrico e terminação apenas nas extremidades do barramento. Alimentação do ESP32 deve ser regulada e protegida; a placa do anúncio precisa ser conferida quanto à faixa de alimentação, isolamento das entradas/saídas e capacidade real do RS485 antes da compra/instalação.
+
+Próxima microfase: confirmar modelo exato da placa e do DSE7320, obter o mapa Gencomm, testar leitura somente em bancada com um controlador, definir payload/versionamento, implementar endpoint de ingestão e só depois instalar no gerador.
+
+## Catálogo de parâmetros DSE7320
+
+O conjunto de telemetria considerado para a integração será:
+
+1. Gerador: tensão fase-neutro e fase-fase, frequência, corrente, potência ativa por fase e total (kW), potência aparente por fase e total (kVA), potência reativa por fase e total (kvar), fator de potência por fase e médio, energia acumulada (kWh, kVAh e kvarh), sequência de fases, esquema de carga, nominal do gerador e configuração ativa.
+2. Rede elétrica: no DSE7320 MKII, tensão fase-neutro e fase-fase, frequência, corrente quando houver TCs configurados na carga, potência, energia, fator de potência, sequência de fases e configuração ativa.
+3. Motor: rotação em RPM, pressão do óleo, temperatura do líquido de arrefecimento, tensão da bateria, nível de combustível, tempo de funcionamento e DTCs. Quando a ECU/CAN suportar, também temperatura do óleo, pressão do turbo, consumo instantâneo, carga percentual do motor, nível de DEF/AdBlue e demais parâmetros disponibilizados pela ECU.
+4. Acumulados: horas de funcionamento do motor, número de partidas e energia acumulada em kWh, kvarh e kVAh, respeitando os limites e possibilidade de reset definidos pelo controlador.
+
+Os parâmetros condicionais devem ser publicados com qualidade/status explícito (`disponivel`, `nao_configurado`, `sem_suporte` ou `falha_comunicacao`), sem substituir ausência por zero ou dado fictício. O payload deve preservar unidade, timestamp, origem (DSE, ECU/CAN ou cálculo), fase quando aplicável e qualidade da leitura.
+## Configuração RS485 do DSE7320
+
+A comunicação local entre cada DSE7320 e sua respectiva HF-006Enet será Modbus RTU em RS485 half-duplex, com 2 fios + comum. Não haverá um único ESP32 compartilhado pelos geradores: cada ponto que precisar de gateway terá um módulo independente. O DSE8610 e as duas USCAs diferentes permanecem como decisões de compatibilidade para uma etapa posterior. Parâmetros de referência para a configuração inicial: baud rate ajustável até 115 kbaud, padrão de fábrica 19200; ID do servidor padrão 10; terminação externa de 120 Ω quando o módulo estiver em uma extremidade do barramento.
+
+Pinagem informada do DSE7320: terminal 56 = blindagem, terminal 57 = B (+), terminal 58 = A (-). A ligação deve ser conferida no manual e no esquema da instalação antes de energizar, especialmente a polaridade A/B e o uso do comum. Cada HF-006Enet será configurada como mestre Modbus RTU do seu DSE7320 local, e cada DSE7320 como servidor/escravo. A Ethernet será o transporte da telemetria até a API.
+
+Configuração de bancada: começar com 19200 baud, ID 10 e leitura somente; confirmar paridade, bits de parada, timeout e mapa de registradores no Configuration Suite/Gencomm. Só aumentar a velocidade ou alterar o endereço depois de validar a comunicação estável.
