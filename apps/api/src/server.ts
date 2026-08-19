@@ -12,7 +12,7 @@ import { enviarLembretesPlanejamento } from './planejamento-email.js';
 import { apagarEmpresa, atualizarEmpresa, criarEmpresa, listarEmpresas, validarEmpresa, type EmpresaInput } from './empresas.js';
 import { chaveFoto, obterFoto } from './storage.js';
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, bodyLimit: 8 * 1024 * 1024 });
 await app.register(cookie);
 await app.register(cors, { origin: process.env.WEB_ORIGIN ?? 'http://localhost:3001', credentials: true });
 
