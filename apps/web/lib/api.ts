@@ -1,4 +1,4 @@
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:4000';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
 export function resolverFotoUrl(valor: string | null) { return valor?.startsWith('storage://') ? apiUrl + '/storage/' + encodeURIComponent(valor.slice('storage://'.length)) : valor; }
 

@@ -3,7 +3,7 @@ services:
     build:
       context: ./apps/web
     environment:
-      NEXT_PUBLIC_API_URL: http://127.0.0.1:${API_PORT:-4000}
+      NEXT_PUBLIC_API_URL: /api
     ports:
       - "${WEB_PORT:-3001}:3000"
     depends_on:
