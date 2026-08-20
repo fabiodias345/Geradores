@@ -28,7 +28,11 @@ services:
       SMTP_PASSWORD: 
       SMTP_FROM: 
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.apipromax.com.br}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.apipromax.com.br/v1}
+      GROK_API_KEY: ${GROK_API_KEY:-}
+      GROK_BASE_URL: ${GROK_BASE_URL:-https://api.apipromax.com.br/v1}
+      GROK_MODEL: ${GROK_MODEL:-grok-3-mini}
+      GROK_TEMPERATURE: ${GROK_TEMPERATURE:-0.2}
     ports:
       - "${API_PORT:-4000}:4000"
     depends_on:
